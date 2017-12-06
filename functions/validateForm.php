@@ -2,9 +2,9 @@
 
 namespace Mizner\VFT\Validate;
 
-function emptyNullWhitespace($question)
+function isEmptyNullWhitespace($value)
 {
-    return (!isset($question) || trim($question) === '');
+    return (empty($value) || ctype_space($value));
 }
 
 function date($value)
@@ -15,13 +15,11 @@ function date($value)
 
 function isOver21($value)
 {
-
     return;
 }
 
 function zip($value)
 {
-
     return;
 }
 
@@ -38,8 +36,7 @@ function email($value)
 
 function validateForm($type, $value)
 {
-    if (emptyNullWhitespace($value)) {
-        _log('NOPE!');
+    if (isEmptyNullWhitespace($value)) {
         return false;
     }
 
@@ -69,4 +66,4 @@ function validateForm($type, $value)
     }
 }
 
-validateForm('email', '');
+validateForm('email', 's');
