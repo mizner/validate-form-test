@@ -9,14 +9,9 @@ function isEmptyNullWhitespace($value)
     return (empty($value) || ctype_space($value));
 }
 
-function date($value)
-{   
-    return;
-}
-
-function isOver21($value)
+function email($value)
 {
-    return;
+    return (bool)filter_var($value, FILTER_VALIDATE_EMAIL);
 }
 
 function zip($value)
@@ -55,10 +50,22 @@ function zipCodeAPIValidate($data)
     return (!in_array('404', (array)json_decode($data)));
 }
 
-function email($value)
+function date($date, $format = 'm/d/Y')
 {
-    return (bool)filter_var($value, FILTER_VALIDATE_EMAIL);
+    $d = DateTime::createFromFormat($format, $date);
+    return $d && $d->format($format) == $date;
 }
+
+function validateAge($value, $age = 21)
+{
+    $now = (new DateTime())->format('m/d/Y');
+    $end = DateTime::createFromFormat('m/d/Y', $now);
+    $start = DateTime::createFromFormat('m/d/Y', $value);
+    $diff = $start->diff($end);
+
+    return ((int)$diff->format('%y') >= $age ? true : false);
+}
+
 
 function validateForm($type, $value)
 {
@@ -90,16 +97,14 @@ function validateForm($type, $value)
                 )
             );
         case 'birthday':
-
-            if (date($value)) {
-                _log('birthday');
-                isOver21($value);
+            if (!date($value)) {
+                return false;
             };
-            break;
+            return validateAge($value);
     }
 }
 
-$result = validateForm('birthday', '06/24/1986');
+$result = validateForm('birthday', '08/09/1999');
 
 _log('RESULT:');
 _log($result);
