@@ -20,18 +20,51 @@ function isOver21($value)
 
 function zip($value)
 {
-    return;
+    return (bool)preg_match('#^\d{5}([\-]?\d{4})?$#', $value);
 }
 
-function generic($value)
+function getNearbyZipCodes($zip)
 {
+    // https://www.zipcodeapi.com/rest/DxeNzBDUm2Py16YKIrdt7r5MfcP9NBJLwsuFqZ5E2WmrRw9YKHSnAogHvXy4aYKQ/radius.json/37919/5/mile
+    $base_uri = 'https://zipcodeapi.com/rest';
+    $api_key = 'DxeNzBDUm2Py16YKIrdt7r5MfcP9NBJLwsuFqZ5E2WmrRw9YKHSnAogHvXy4aYKQ';
+    $radius = '5';
+    $unit = 'mile';
+    $option = 'radius';
+    $format = 'json';
+    $full_uri = sprintf(
+        '%s/%s/%s.%s/%s/%s/%s',
+        $base_uri,
+        $api_key,
+        $option,
+        $format,
+        $zip,
+        $radius,
+        $unit
+    );
 
-    return;
+    _log($full_uri);
+    // Get cURL resource
+    $curl = curl_init();
+// Set some options - we are passing in a useragent too here
+    curl_setopt_array($curl, array(
+        CURLOPT_RETURNTRANSFER => 1,
+        CURLOPT_URL            => $full_uri,
+        CURLOPT_USERAGENT      => 'Codular Sample cURL Request',
+    ));
+// Send the request & save response to $resp
+    $resp = curl_exec($curl);
+// Close request to clear up some resources
+    curl_close($curl);
+    _log('CURLED:');
+    _log($resp);
+
+
 }
 
 function email($value)
 {
-    return (boolval(filter_var($value, FILTER_VALIDATE_EMAIL)));
+    return (bool)filter_var($value, FILTER_VALIDATE_EMAIL);
 }
 
 function validateForm($type, $value)
@@ -43,19 +76,15 @@ function validateForm($type, $value)
     switch ($type) {
         case 'email':
             return email($value);
-            break;
         case 'first':
-            _log('first');
-            generic($value);
-            break;
+            return true; // isEmptyNullWhitespace already validated.
         case 'last':
-            _log('last');
-            generic($value);
-            break;
+            return true; // isEmptyNullWhitespace already validated.
         case 'zip':
-            _log('zip');
-            zip($value);
-            break;
+            if (!zip($value)) {
+                return false;
+            }
+            return getNearbyZipCodes($value);
         case 'birthday':
             _log('birthday');
             if (date($value)) {
@@ -65,6 +94,6 @@ function validateForm($type, $value)
     }
 }
 
-$result = validateForm('email', 'michaelmizner@gmail.com');
+$result = validateForm('zip', '99999');
 
 _log('RESULT:' . $result);
