@@ -2,14 +2,15 @@
 
 namespace Mizner\VFT\Validate;
 
+use DateTime;
+
 function isEmptyNullWhitespace($value)
 {
     return (empty($value) || ctype_space($value));
 }
 
 function date($value)
-{
-
+{   
     return;
 }
 
@@ -23,43 +24,35 @@ function zip($value)
     return (bool)preg_match('#^\d{5}([\-]?\d{4})?$#', $value);
 }
 
-function getNearbyZipCodes($zip)
+function getData($uri)
 {
-    // https://www.zipcodeapi.com/rest/DxeNzBDUm2Py16YKIrdt7r5MfcP9NBJLwsuFqZ5E2WmrRw9YKHSnAogHvXy4aYKQ/radius.json/37919/5/mile
-    $base_uri = 'https://zipcodeapi.com/rest';
-    $api_key = 'DxeNzBDUm2Py16YKIrdt7r5MfcP9NBJLwsuFqZ5E2WmrRw9YKHSnAogHvXy4aYKQ';
-    $radius = '5';
-    $unit = 'mile';
-    $option = 'radius';
-    $format = 'json';
-    $full_uri = sprintf(
-        '%s/%s/%s.%s/%s/%s/%s',
-        $base_uri,
-        $api_key,
-        $option,
-        $format,
-        $zip,
-        $radius,
-        $unit
+    $ch = curl_init();
+    $timeout = 5;
+    curl_setopt($ch, CURLOPT_URL, $uri);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+    $data = curl_exec($ch);
+    curl_close($ch);
+
+    return $data;
+}
+
+function zipCodeApiRadiusURI($args)
+{
+    return sprintf(
+        'https://www.zipcodeapi.com/rest/%s/%s.%s/%s/%s/%s',
+        $args['api_key'],
+        $args['option'],
+        $args['format'],
+        $args['zip'],
+        $args['radius'],
+        $args['unit']
     );
+}
 
-    _log($full_uri);
-    // Get cURL resource
-    $curl = curl_init();
-// Set some options - we are passing in a useragent too here
-    curl_setopt_array($curl, array(
-        CURLOPT_RETURNTRANSFER => 1,
-        CURLOPT_URL            => $full_uri,
-        CURLOPT_USERAGENT      => 'Codular Sample cURL Request',
-    ));
-// Send the request & save response to $resp
-    $resp = curl_exec($curl);
-// Close request to clear up some resources
-    curl_close($curl);
-    _log('CURLED:');
-    _log($resp);
-
-
+function zipCodeAPIValidate($data)
+{
+    return (!in_array('404', (array)json_decode($data)));
 }
 
 function email($value)
@@ -84,16 +77,29 @@ function validateForm($type, $value)
             if (!zip($value)) {
                 return false;
             }
-            return getNearbyZipCodes($value);
+            return zipCodeAPIValidate(
+                getData(
+                    zipCodeApiRadiusURI([
+                        'api_key' => 'DxeNzBDUm2Py16YKIrdt7r5MfcP9NBJLwsuFqZ5E2WmrRw9YKHSnAogHvXy4aYKQ',
+                        'radius'  => '5',
+                        'unit'    => 'mile',
+                        'zip'     => $value,
+                        'option'  => 'radius',
+                        'format'  => 'json',
+                    ])
+                )
+            );
         case 'birthday':
-            _log('birthday');
+
             if (date($value)) {
+                _log('birthday');
                 isOver21($value);
             };
             break;
     }
 }
 
-$result = validateForm('zip', '99999');
+$result = validateForm('birthday', '06/24/1986');
 
-_log('RESULT:' . $result);
+_log('RESULT:');
+_log($result);
