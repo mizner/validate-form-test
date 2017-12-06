@@ -31,7 +31,7 @@ function generic($value)
 
 function email($value)
 {
-    return (filter_var($value, FILTER_VALIDATE_EMAIL) ? true : false);
+    return (boolval(filter_var($value, FILTER_VALIDATE_EMAIL)));
 }
 
 function validateForm($type, $value)
@@ -42,8 +42,7 @@ function validateForm($type, $value)
 
     switch ($type) {
         case 'email':
-            _log('email');
-            email($value);
+            return email($value);
             break;
         case 'first':
             _log('first');
@@ -66,4 +65,6 @@ function validateForm($type, $value)
     }
 }
 
-validateForm('email', 's');
+$result = validateForm('email', 'michaelmizner@gmail.com');
+
+_log('RESULT:' . $result);
