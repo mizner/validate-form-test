@@ -102,3 +102,4 @@ function validateForm($type, $value)
             return validateAge($value);
     }
 }
+
